@@ -1,0 +1,277 @@
+using Microsoft.Win32;
+
+namespace SymatoIME;
+
+/// <summary>
+/// Main application context managing the system tray and all components
+/// </summary>
+public class SymatoContext : ApplicationContext
+{
+    private readonly NotifyIcon _trayIcon;
+    private readonly KeyboardHook _keyboardHook;
+    private readonly MouseHook _mouseHook;
+    private readonly VietnameseConverter _converter;
+    private readonly Settings _settings;
+    
+    private bool _isActive = true;
+    private bool _keyRemapEnabled = true;
+    private bool _volumeControlEnabled = true;
+
+    public SymatoContext()
+    {
+        _settings = Settings.Load();
+        _isActive = _settings.ImeEnabled;
+        _keyRemapEnabled = _settings.KeyRemapEnabled;
+        _volumeControlEnabled = _settings.VolumeControlEnabled;
+        
+        _converter = new VietnameseConverter();
+        
+        // Create tray icon
+        _trayIcon = new NotifyIcon
+        {
+            Icon = CreateIcon(_isActive),
+            Visible = true,
+            Text = "SymatoIME - " + (_isActive ? "Active" : "Inactive"),
+            ContextMenuStrip = CreateContextMenu()
+        };
+        
+        _trayIcon.MouseClick += TrayIcon_MouseClick;
+        
+        // Initialize hooks
+        _keyboardHook = new KeyboardHook();
+        _keyboardHook.KeyPressed += OnKeyPressed;
+        _keyboardHook.Start();
+        
+        _mouseHook = new MouseHook();
+        _mouseHook.MouseWheel += OnMouseWheel;
+        _mouseHook.Start();
+        
+        // Apply startup setting
+        SetStartup(_settings.StartWithWindows);
+    }
+
+    private Icon CreateIcon(bool active)
+    {
+        int size = 32;
+        using var bitmap = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bitmap);
+        
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+        
+        // Background color
+        Color bgColor = active ? Color.FromArgb(0, 120, 215) : Color.FromArgb(128, 128, 128);
+        using var bgBrush = new SolidBrush(bgColor);
+        g.FillRectangle(bgBrush, 0, 0, size, size);
+        
+        // Draw "S" letter
+        using var font = new Font("Segoe UI", 20, FontStyle.Bold);
+        using var textBrush = new SolidBrush(Color.White);
+        
+        var textSize = g.MeasureString("S", font);
+        float x = (size - textSize.Width) / 2;
+        float y = (size - textSize.Height) / 2;
+        
+        g.DrawString("S", font, textBrush, x, y);
+        
+        return Icon.FromHandle(bitmap.GetHicon());
+    }
+
+    private ContextMenuStrip CreateContextMenu()
+    {
+        var menu = new ContextMenuStrip();
+        
+        var imeItem = new ToolStripMenuItem("Vietnamese IME")
+        {
+            Checked = _isActive,
+            CheckOnClick = true
+        };
+        imeItem.Click += (s, e) => ToggleIme();
+        
+        var keyRemapItem = new ToolStripMenuItem("Key Remap (~ ↔ CapsLock ↔ Tab)")
+        {
+            Checked = _keyRemapEnabled,
+            CheckOnClick = true
+        };
+        keyRemapItem.Click += (s, e) => ToggleKeyRemap();
+        
+        var volumeItem = new ToolStripMenuItem("Volume Control (Ctrl+Shift+Wheel)")
+        {
+            Checked = _volumeControlEnabled,
+            CheckOnClick = true
+        };
+        volumeItem.Click += (s, e) => ToggleVolumeControl();
+        
+        var startupItem = new ToolStripMenuItem("Start with Windows")
+        {
+            Checked = _settings.StartWithWindows,
+            CheckOnClick = true
+        };
+        startupItem.Click += (s, e) => ToggleStartup(startupItem);
+        
+        var exitItem = new ToolStripMenuItem("Exit");
+        exitItem.Click += (s, e) => Exit();
+        
+        menu.Items.Add(imeItem);
+        menu.Items.Add(keyRemapItem);
+        menu.Items.Add(volumeItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(startupItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(exitItem);
+        
+        return menu;
+    }
+
+    private void TrayIcon_MouseClick(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
+        {
+            ToggleIme();
+        }
+    }
+
+    private void ToggleIme()
+    {
+        _isActive = !_isActive;
+        _settings.ImeEnabled = _isActive;
+        _settings.Save();
+        
+        UpdateTrayIcon();
+        
+        if (_trayIcon.ContextMenuStrip?.Items[0] is ToolStripMenuItem item)
+            item.Checked = _isActive;
+    }
+
+    private void ToggleKeyRemap()
+    {
+        _keyRemapEnabled = !_keyRemapEnabled;
+        _settings.KeyRemapEnabled = _keyRemapEnabled;
+        _settings.Save();
+        
+        if (_trayIcon.ContextMenuStrip?.Items[1] is ToolStripMenuItem item)
+            item.Checked = _keyRemapEnabled;
+    }
+
+    private void ToggleVolumeControl()
+    {
+        _volumeControlEnabled = !_volumeControlEnabled;
+        _settings.VolumeControlEnabled = _volumeControlEnabled;
+        _settings.Save();
+        
+        if (_trayIcon.ContextMenuStrip?.Items[2] is ToolStripMenuItem item)
+            item.Checked = _volumeControlEnabled;
+    }
+
+    private void ToggleStartup(ToolStripMenuItem item)
+    {
+        _settings.StartWithWindows = item.Checked;
+        _settings.Save();
+        SetStartup(item.Checked);
+    }
+
+    private void SetStartup(bool enable)
+    {
+        const string keyName = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        const string valueName = "SymatoIME";
+        
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(keyName, true);
+            if (key == null) return;
+            
+            if (enable)
+            {
+                string exePath = Application.ExecutablePath;
+                key.SetValue(valueName, $"\"{exePath}\"");
+            }
+            else
+            {
+                key.DeleteValue(valueName, false);
+            }
+        }
+        catch
+        {
+            // Ignore registry errors
+        }
+    }
+
+    private void UpdateTrayIcon()
+    {
+        var oldIcon = _trayIcon.Icon;
+        _trayIcon.Icon = CreateIcon(_isActive);
+        _trayIcon.Text = "SymatoIME - " + (_isActive ? "Active" : "Inactive");
+        oldIcon?.Dispose();
+    }
+
+    private bool OnKeyPressed(Keys key, bool isKeyDown, ref bool handled)
+    {
+        // Handle Ctrl+Shift+S to toggle IME
+        if (isKeyDown && key == Keys.S && 
+            (Control.ModifierKeys & Keys.Control) != 0 && 
+            (Control.ModifierKeys & Keys.Shift) != 0)
+        {
+            ToggleIme();
+            handled = true;
+            return true;
+        }
+
+        // Handle key remapping
+        if (_keyRemapEnabled && isKeyDown)
+        {
+            Keys? remappedKey = key switch
+            {
+                Keys.Oemtilde => Keys.CapsLock,  // ~ -> CapsLock
+                Keys.CapsLock => Keys.Tab,        // CapsLock -> Tab
+                Keys.Tab => Keys.Oemtilde,        // Tab -> ~
+                _ => null
+            };
+            
+            if (remappedKey.HasValue)
+            {
+                NativeMethods.SendKey(remappedKey.Value);
+                handled = true;
+                return true;
+            }
+        }
+        
+        // Handle Vietnamese input
+        if (_isActive && isKeyDown)
+        {
+            return _converter.ProcessKey(key, ref handled);
+        }
+        
+        return false;
+    }
+
+    private void OnMouseWheel(int delta, Keys modifiers)
+    {
+        if (!_volumeControlEnabled) return;
+        
+        // Ctrl+Shift+Wheel for volume
+        if (modifiers.HasFlag(Keys.Control) && modifiers.HasFlag(Keys.Shift))
+        {
+            VolumeControl.AdjustVolume(delta > 0 ? 2 : -2);
+        }
+    }
+
+    private void Exit()
+    {
+        _keyboardHook.Stop();
+        _mouseHook.Stop();
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
+        Application.Exit();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _keyboardHook?.Dispose();
+            _mouseHook?.Dispose();
+            _trayIcon?.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+}

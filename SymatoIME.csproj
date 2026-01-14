@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>SymatoIME.Program</StartupObject>
+    <AssemblyName>SymatoIME</AssemblyName>
+    <RootNamespace>SymatoIME</RootNamespace>
+    <Version>1.0.0</Version>
+    <Authors>Symato</Authors>
+    <Description>Vietnamese Input Method Editor for Windows 11</Description>
+  </PropertyGroup>
+
+</Project>
