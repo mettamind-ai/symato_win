@@ -16,9 +16,10 @@ Bộ gõ tiếng Việt tùy chỉnh cho Windows 11, được xây dựng bằng
 | `x`  | Ngã       | `ax` → ã |
 | `j`  | Nặng      | `aj` → ạ |
 
-- Khuyến khích bỏ dấu + thanh sau khi gõ hết âm tiết không dấu
+- **Khuyến khích bỏ dấu + thanh sau khi gõ hết âm tiết không dấu**
   - `muon` + `ws` => `mướn`
   - `muon` + `zj` => `muộn`
+  - `duong` + `dwf` => `đường`
 - **`uo + w` → `ươ`**: `muonw` → `mươn`, `luonw` → `lươn`
 - **Auto `ie/ye` → `iê/yê`**: `tien` → `tiên`, `yen` → `yên`
 - **Quy tắc bỏ dấu chuẩn**: 
