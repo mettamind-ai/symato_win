@@ -6,17 +6,19 @@ Bộ gõ tiếng Việt tùy chỉnh cho Windows 11, được xây dựng bằng
 
 ### 🇻🇳 Gõ tiếng Việt (Telex-like)
 | Phím | Chuyển đổi | Ví dụ |
-|------|-----------|-------|
-| `z` | Mũ (â, ê, ô) | `az` → â, `ez` → ê |
-| `w` | Móc/Trăng (ă, ơ, ư) | `aw` → ă, `ow` → ơ |
-| `dd` | Đ | `dd` → đ |
-| `s` | Sắc | `as` → á |
-| `f` | Huyền | `af` → à |
-| `r` | Hỏi | `ar` → ả |
-| `x` | Ngã | `ax` → ã |
-| `j` | Nặng | `aj` → ạ |
+|------|------------|-------|
+| `z`  | Mũ (â, ê, ô)        | `az` → â, `ez` → ê |
+| `w`  | Móc/Trăng (ă, ơ, ư) | `aw` → ă, `ow` → ơ |
+| `dd` | Đ         | `dd` → đ |
+| `s`  | Sắc       | `as` → á |
+| `f`  | Huyền     | `af` → à |
+| `r`  | Hỏi       | `ar` → ả |
+| `x`  | Ngã       | `ax` → ã |
+| `j`  | Nặng      | `aj` → ạ |
 
-### 🎯 Tính năng đặc biệt
+- Khuyến khích bỏ dấu + thanh sau khi gõ hết âm tiết không dấu
+  - `muon` + `ws` => `mướn`
+  - `muon` + `zj` => `muộn`
 - **`uo + w` → `ươ`**: `muonw` → `mươn`, `luonw` → `lươn`
 - **Auto `ie/ye` → `iê/yê`**: `tien` → `tiên`, `yen` → `yên`
 - **Quy tắc bỏ dấu chuẩn**: 
@@ -26,7 +28,7 @@ Bộ gõ tiếng Việt tùy chỉnh cho Windows 11, được xây dựng bằng
 ### 🧠 Smart Validation (MỚI!)
 - **2800+ âm tiết hợp lệ**: Chỉ áp dụng dấu cho âm tiết tiếng Việt hợp lệ
 - **Auto-revert**: Khi gõ tiếng Anh (như `rerun`), tự động revert về ký tự gốc
-- **Auto-reposition**: `muón` + `g` → `muống` (dấu tự động di chuyển)
+- **Auto-reposition**: `múo` + `n` → `muón` (dấu tự động di chuyển)
 
 ### ⌨️ Key Remapping
 Chu kỳ hoán đổi phím: **`~` ↔ `CapsLock` ↔ `Tab`**
