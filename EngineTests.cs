@@ -59,6 +59,19 @@ public static class EngineTests
         Check("tias", "tía", "valid_open_ia");
         Check("ties", "ties", "invalid_open_ie");  // "tie" without closing consonant is invalid
         
+        // === TONE STOP RULE (c/ch/t/p only allow sắc/nặng) ===
+        Check("hocs", "hóc", "tone_stop_s_valid");
+        Check("hocj", "học", "tone_stop_j_valid");
+        Check("hocf", "hocf", "tone_stop_f_invalid");  // huyền not allowed
+        Check("hocr", "hocr", "tone_stop_r_invalid");  // hỏi not allowed
+        Check("hocx", "hocx", "tone_stop_x_invalid");  // ngã not allowed
+        Check("sachs", "sách", "tone_stop_ch_s_valid");
+        Check("sachf", "sachf", "tone_stop_ch_f_invalid");
+        Check("mats", "mát", "tone_stop_t_s_valid");
+        Check("matf", "matf", "tone_stop_t_f_invalid");
+        Check("deps", "dép", "tone_stop_p_s_valid");  // d + e + p + s = dép
+        Check("depf", "depf", "tone_stop_p_f_invalid");
+        
         // Print results
         int total = _failed + CountPassed();
         Console.WriteLine($"\n=== Results: {total - _failed} passed, {_failed} failed ===");

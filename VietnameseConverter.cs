@@ -115,61 +115,31 @@ public class VietnameseConverter
         return '\0';
     }
 
-    // Extract base sym (ASCII only, no diacritics) for validation
-    // SymatoSyms uses "dd" for "đ"
-    private string GetBaseSym(string buffer)
-    {
-        var sb = new StringBuilder(buffer.Length + 4);
-        foreach (char c in buffer)
-        {
-            char lower = char.ToLower(c);
-            if (lower == 'đ')
-            {
-                sb.Append("dd");
-            }
-            else
-            {
-                char pure = GetPureBaseVowel(c);
-                sb.Append(char.ToLower(pure));
-            }
-        }
-        return sb.ToString();
-    }
+    // Extract base sym (ASCII only) for validation. SymatoSyms uses "dd" for "đ"
+    private string GetBaseSym(string buffer) => string.Concat(buffer.Select(c =>
+        char.ToLower(c) == 'đ' ? "dd" : char.ToLower(GetPureBaseVowel(c)).ToString()));
 
-    // Check if current buffer forms a valid Vietnamese syllable
     private bool IsValidSym(string buffer) => SymatoSyms.Contains(GetBaseSym(buffer));
 
-    // Quick check if buffer contains any tone mark
-    private static bool HasToneMark(string buffer)
-    {
-        foreach (char c in buffer)
-            if (GetToneKeyFromChar(c) != '\0') return true;
-        return false;
-    }
+    private static bool HasToneMark(string buffer) => buffer.Any(c => GetToneKeyFromChar(c) != '\0');
 
-    // Check if char is a consonant that can end a syllable
-    private static bool IsEndingConsonant(char c) => 
-        "nmtcpNMTCP".Contains(c) || c == 'g' || c == 'h';
+    // Tone Stop Rule: c/ch/t/p endings only allow sắc(s) or nặng(j)
+    private static bool EndsWithStopConsonant(string b) =>
+        b.Length >= 2 && (b.EndsWith("ch", StringComparison.OrdinalIgnoreCase) ||
+        "ctp".Contains(char.ToLower(b[^1])));
 
-    // Remove all tone marks from buffer (keep diacritics like â, ê, ơ)
-    private string RemoveToneMarks(string buffer)
-    {
-        var sb = new StringBuilder(buffer.Length);
-        foreach (char c in buffer)
-        {
-            char baseV = GetBaseVowel(c); // Removes tone but keeps circumflex/horn
-            sb.Append(baseV);
-        }
-        return sb.ToString();
-    }
+    private static bool IsValidToneForSyllable(string buffer, char toneKey) =>
+        !EndsWithStopConsonant(buffer) || toneKey == 's' || toneKey == 'j';
+
+    private static bool IsEndingConsonant(char c) => "nmtcpghNMTCPGH".Contains(c);
+
+    private string RemoveToneMarks(string buffer) =>
+        string.Concat(buffer.Select(c => GetBaseVowel(c)));
 
     // Render-time decision: return buffer if valid, else raw input
-    private string GetRenderText()
-    {
-        if (_rawBuffer.Length == 0) return "";
-        string bufferText = _buffer.ToString();
-        return IsValidSym(bufferText) ? bufferText : _rawBuffer.ToString();
-    }
+    private string GetRenderText() =>
+        _rawBuffer.Length == 0 ? "" : 
+        (IsValidSym(_buffer.ToString()) ? _buffer.ToString() : _rawBuffer.ToString());
 
     // Render to screen with minimal changes (diff-based)
     private void Render()
@@ -588,6 +558,9 @@ public class VietnameseConverter
     {
         // Only apply tone to valid Vietnamese syllables
         if (!IsValidSym(buffer)) return null;
+        
+        // Tone Stop Rule: c/ch/t/p endings only allow sắc (s) or nặng (j)
+        if (!IsValidToneForSyllable(buffer, toneKey)) return null;
         
         int tonePos = FindTonePosition(buffer);
         if (tonePos < 0) return null;

@@ -113,7 +113,7 @@ symato_qoder/
 5. **Có phụ âm cuối** → dấu trên nguyên âm cuối
 6. **Không có phụ âm cuối** → dấu trên nguyên âm áp cuối
 
-## ✅ Unit Tests (29 tests)
+## ✅ Unit Tests (40 tests)
 
 ```
 ✓ Tone tests: as→á, af→à, ar→ả, ax→ã, aj→ạ
@@ -124,6 +124,7 @@ symato_qoder/
 ✓ Validation: quas→quá, gias→giá
 ✓ Auto ie/ye: tien→tiên, yen→yên
 ✓ Invalid→raw: rerun→rerun, xyz→xyz
+✓ Tone Stop Rule: c/ch/t/p only sắc(s)/nặng(j)
 ```
 
 ## 💡 Suggestions

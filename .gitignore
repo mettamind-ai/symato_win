@@ -28,3 +28,6 @@ Desktop.ini
 
 # OS generated
 .DS_Store
+
+# Local agent artifacts
+.mx_hybrid/
