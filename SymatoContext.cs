@@ -229,6 +229,8 @@ public class SymatoContext : ApplicationContext
             
             if (remappedKey.HasValue)
             {
+                // Reset IME buffer when remapped keys are pressed (e.g., Tab for autocomplete)
+                _converter.Reset();
                 NativeMethods.SendKey(remappedKey.Value);
                 handled = true;
                 return true;
