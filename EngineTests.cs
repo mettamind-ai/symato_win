@@ -72,6 +72,23 @@ public static class EngineTests
         Check("deps", "dép", "tone_stop_p_s_valid");  // d + e + p + s = dép
         Check("depf", "depf", "tone_stop_p_f_invalid");
         
+        // === TONE STOP RULE - LATE CONSONANT (render-time validation) ===
+        Check("next", "next", "tone_stop_late_t_x_invalid");  // 'x' applied before 't', still invalid
+        Check("nect", "nect", "tone_stop_late_t_other");       // similar pattern
+        Check("nexc", "nexc", "tone_stop_late_c_x_invalid");   // 'x' invalid with 'c' ending
+        
+        // === OA + W PATTERN (oa -> oă, not ơa) ===
+        Check("hoawc", "hoăc", "oa_breve_hoac");     // hoawc -> hoăc (not hơac)
+        Check("toawc", "toăc", "oa_breve_toac");     // similar pattern
+        Check("loawng", "loăng", "oa_breve_loang");  // with ng ending
+        Check("hoawcj", "hoặc", "oa_breve_with_tone"); // with tone
+        
+        // === DIPHTHONG TONE PLACEMENT (ươ, iê, uô - tone on SECOND vowel) ===
+        Check("nguoiwf", "người", "diphthong_uoi_tone_on_o");     // ươi + f → tone on ơ
+        Check("muoiws", "mưới", "diphthong_uoi_tone_sac");         // ươi + s → sắc on ơ
+        Check("tuoiw", "tươi", "diphthong_uoi_no_tone");           // ươi without tone
+        Check("muonwf", "mườn", "diphthong_uon_tone_on_o");        // ươn + f → tone on ơ
+        
         // Print results
         int total = _failed + CountPassed();
         Console.WriteLine($"\n=== Results: {total - _failed} passed, {_failed} failed ===");

@@ -137,9 +137,35 @@ public class VietnameseConverter
         string.Concat(buffer.Select(c => GetBaseVowel(c)));
 
     // Render-time decision: return buffer if valid, else raw input
-    private string GetRenderText() =>
-        _rawBuffer.Length == 0 ? "" : 
-        (IsValidSym(_buffer.ToString()) ? _buffer.ToString() : _rawBuffer.ToString());
+    private string GetRenderText()
+    {
+        if (_rawBuffer.Length == 0) return "";
+        
+        string buffer = _buffer.ToString();
+        
+        // Check basic syllable validity
+        if (!IsValidSym(buffer)) return _rawBuffer.ToString();
+        
+        // Check Tone Stop Rule: if buffer has a tone, validate it against ending consonant
+        if (HasToneMark(buffer) && EndsWithStopConsonant(buffer))
+        {
+            // Find the tone in the buffer
+            char toneKey = '\0';
+            foreach (char c in buffer)
+            {
+                toneKey = GetToneKeyFromChar(c);
+                if (toneKey != '\0') break;
+            }
+            
+            // If tone violates Tone Stop Rule, fallback to raw
+            if (toneKey != '\0' && !IsValidToneForSyllable(buffer, toneKey))
+            {
+                return _rawBuffer.ToString();
+            }
+        }
+        
+        return buffer;
+    }
 
     // Render to screen with minimal changes (diff-based)
     private void Render()
@@ -676,14 +702,21 @@ public class VietnameseConverter
         if (specialVowelPositions.Count > 0)
         {
             // Check for diphthong patterns: ươ, iê, uô (two consecutive special vowels)
-            if (specialVowelPositions.Count >= 2 && endsWithConsonant)
+            // For these diphthongs, tone ALWAYS goes on the SECOND special vowel
+            // Examples: người (ơ), mười (ơ), tiếu (ê), muối (ô)
+            if (specialVowelPositions.Count >= 2)
             {
-                // For diphthongs with ending consonant, return the LAST special vowel
-                // ươ+n → tone on ơ (mướn), iê+n → tone on ê (tiến), uô+ng → tone on ô (chuống)
-                return specialVowelPositions[^1];
+                // Check if the two special vowels are consecutive (forming a diphthong)
+                int first = specialVowelPositions[0];
+                int second = specialVowelPositions[1];
+                if (second == first + 1)
+                {
+                    // Consecutive special vowels = diphthong → tone on SECOND vowel
+                    return second;
+                }
             }
             
-            // For single special vowel or no ending consonant, return the first special vowel
+            // For single special vowel, return its position
             return specialVowelPositions[0];
         }
 
