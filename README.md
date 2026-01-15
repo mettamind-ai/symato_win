@@ -67,6 +67,11 @@ dotnet run
 dotnet publish -c Release -r win-x64 --self-contained
 ```
 
+### Chạy unit tests
+```bash
+dotnet run -c Test -- --test
+```
+
 ## 📁 Cấu trúc
 
 ```
@@ -75,6 +80,7 @@ symato_qoder/
 ├── SymatoContext.cs        # System tray, lifecycle
 ├── VietnameseConverter.cs  # Core Vietnamese input logic
 ├── SymatoSyms.cs           # 2800+ valid Vietnamese syllables
+├── EngineTests.cs          # Unit tests (29 tests)
 ├── KeyboardHook.cs         # Low-level keyboard hook
 ├── MouseHook.cs            # Low-level mouse hook
 ├── VolumeControl.cs        # Volume control with OSD
@@ -83,6 +89,13 @@ symato_qoder/
 ├── SymatoIME.csproj        # Project file
 └── app.manifest            # UAC manifest
 ```
+
+## 🏗️ Architecture
+
+- **Render-time decision**: Không modify buffer trực tiếp, quyết định output khi render
+- **Diff-based output**: Chỉ gửi thay đổi minimal đến màn hình
+- **RebuildFromRaw**: Backspace rebuild lại buffer từ raw input
+- **SendInput Unicode**: Gửi ký tự qua keyboard input (không dùng clipboard)
 
 ## 🎨 System Tray
 
@@ -100,16 +113,22 @@ symato_qoder/
 5. **Có phụ âm cuối** → dấu trên nguyên âm cuối
 6. **Không có phụ âm cuối** → dấu trên nguyên âm áp cuối
 
-## ⚠️ Known Issues
+## ✅ Unit Tests (29 tests)
 
-- **Edge cases chưa test kỹ**: Một số tổ hợp phím phức tạp có thể chưa hoạt động đúng
-  - Ví dụ: `rerun` có thể ra `rẻun` thay vì `rerun`
-- **Validation có thể strict**: Một số từ vay mượn/mới có thể không được nhận dạng
-  - Ví dụ: Tên riêng, từ tiếng Anh xen kẽ
+```
+✓ Tone tests: as→á, af→à, ar→ả, ax→ã, aj→ạ
+✓ Circumflex: az→â, ez→ê, oz→ô
+✓ Horn/breve: aw→ă, ow→ơ, uw→ư
+✓ Combined: azs→ấ, uwj→ự
+✓ UO cluster: tuongw→tương, muonws→mướn
+✓ Validation: quas→quá, gias→giá
+✓ Auto ie/ye: tien→tiên, yen→yên
+✓ Invalid→raw: rerun→rerun, xyz→xyz
+```
 
 ## 💡 Suggestions
 
-- [ ] Refactor sang state-based design (như symato_droid)
-- [ ] Tách Engine riêng để có thể unit test
+- [ ] Tách Engine riêng để dễ maintain
 - [ ] Thêm option tắt validation (cho user muốn gõ tự do)
-- [ ] Render-time decision thay vì modify buffer
+- [ ] State-based design với CharState struct (như symato_droid)
+

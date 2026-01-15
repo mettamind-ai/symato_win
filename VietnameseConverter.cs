@@ -10,6 +10,7 @@ public class VietnameseConverter
     private readonly StringBuilder _buffer = new();
     private readonly StringBuilder _rawBuffer = new();
     private readonly Stack<UndoAction> _undoStack = new();
+    private string _renderedText = "";  // Track what's displayed on screen
     private DateTime _lastKeyTime = DateTime.MinValue;
     private const int BufferTimeoutMs = 2000;
 
@@ -162,6 +163,38 @@ public class VietnameseConverter
         return sb.ToString();
     }
 
+    // Render-time decision: return buffer if valid, else raw input
+    private string GetRenderText()
+    {
+        if (_rawBuffer.Length == 0) return "";
+        string bufferText = _buffer.ToString();
+        return IsValidSym(bufferText) ? bufferText : _rawBuffer.ToString();
+    }
+
+    // Render to screen with minimal changes (diff-based)
+    private void Render()
+    {
+        string newText = GetRenderText();
+        if (newText == _renderedText) return;
+        
+        // Find common prefix
+        int common = 0;
+        int minLen = Math.Min(_renderedText.Length, newText.Length);
+        while (common < minLen && _renderedText[common] == newText[common])
+            common++;
+        
+        // Delete chars after common prefix
+        int deleteCount = _renderedText.Length - common;
+        if (deleteCount > 0)
+            SendBackspaces(deleteCount);
+        
+        // Send new chars after common prefix
+        if (common < newText.Length)
+            SendString(newText.Substring(common));
+        
+        _renderedText = newText;
+    }
+
     // Try to reposition existing tone mark to correct position after buffer changes
     private string? TryRepositionTone(string buffer)
     {
@@ -267,28 +300,23 @@ public class VietnameseConverter
             string? result = TryApplyModifier(_buffer.ToString(), lowerC);
             if (result != null)
             {
-                int deleteCount = _buffer.Length;
-                SendBackspaces(deleteCount);
-                SendString(result);
                 _buffer.Clear();
                 _buffer.Append(result);
+                Render();
                 handled = true;
                 return true;
             }
         }
 
         // Check for ie/ye -> iê/yê auto-conversion
-        // When typing a consonant after "ie" or "ye", convert 'e' to 'ê'
         if (IeYeFollowingConsonants.Contains(c))
         {
             string? result = TryAutoConvertIeYe(_buffer.ToString(), c);
             if (result != null)
             {
-                int deleteCount = _buffer.Length;
-                SendBackspaces(deleteCount);
-                SendString(result);
                 _buffer.Clear();
                 _buffer.Append(result);
+                Render();
                 handled = true;
                 return true;
             }
@@ -297,82 +325,77 @@ public class VietnameseConverter
         // Regular character - add to buffer
         _buffer.Append(c);
         
-        // If buffer becomes invalid and has tone/diacritics, revert to raw input
-        string currentBuffer = _buffer.ToString();
-        if (!IsValidSym(currentBuffer) && HasToneMark(currentBuffer))
-        {
-            string raw = _rawBuffer.ToString();
-            // Only backspace chars that are on screen (not the just-typed char)
-            SendBackspaces(_buffer.Length - 1);
-            SendString(raw);
-            _buffer.Clear();
-            _buffer.Append(raw);
-            _undoStack.Clear();
-            handled = true;
-            return true;
-        }
-        
         // Auto-reposition tone if needed (e.g., "muón" + "g" → "muống")
         string? repositioned = TryRepositionTone(_buffer.ToString());
         if (repositioned != null)
         {
-            SendBackspaces(_buffer.Length);
-            SendString(repositioned);
             _buffer.Clear();
             _buffer.Append(repositioned);
-            handled = true;
-            return true;
         }
         
-        return false;
+        // Render with validation (shows buffer if valid, raw if invalid)
+        Render();
+        handled = true;
+        return true;
     }
 
     private bool HandleBackspace(ref bool handled)
     {
-        if (_undoStack.Count > 0 && _buffer.Length > 0)
+        if (_rawBuffer.Length == 0)
         {
-            var action = _undoStack.Pop();
-            
-            // Undo the last diacritic action
-            if (action.Position < _buffer.Length)
-            {
-                string current = _buffer.ToString();
-                string result = current.Substring(0, action.Position) + action.OldChar + 
-                               current.Substring(action.Position + 1);
-                
-                // Send backspaces to delete current buffer, then send the undone result
-                SendBackspaces(_buffer.Length);
-                SendString(result);
-                
-                _buffer.Clear();
-                _buffer.Append(result);
-                
-                // Remove the modifier key from raw buffer
-                if (_rawBuffer.Length > 0)
-                    _rawBuffer.Length--;
-                
-                handled = true;
-                return true;
-            }
+            _buffer.Clear();
+            _undoStack.Clear();
+            return false;
         }
         
-        // Normal backspace behavior
-        if (_buffer.Length > 0)
-            _buffer.Length--;
-        if (_rawBuffer.Length > 0)
-            _rawBuffer.Length--;
+        // Remove last char from raw buffer
+        _rawBuffer.Length--;
         
-        return false;
+        // Rebuild buffer from raw input (like symato_droid)
+        // Rebuild buffer from raw input
+        RebuildFromRaw();
+        
+        // Render with diff-based updates
+        Render();
+        handled = true;
+        return true;
+    }
+    
+    // Rebuild _buffer from _rawBuffer by replaying all transformations
+    private void RebuildFromRaw()
+    {
+        _buffer.Clear();
+        _undoStack.Clear();
+        
+        string raw = _rawBuffer.ToString();
+        foreach (char c in raw)
+        {
+            char lower = char.ToLower(c);
+            
+            // Try to apply as modifier
+            string? modified = TryApplyModifier(_buffer.ToString(), lower);
+            if (modified != null)
+            {
+                _buffer.Clear();
+                _buffer.Append(modified);
+            }
+            else
+            {
+                _buffer.Append(c);
+            }
+        }
     }
 
     private bool HandleEscape(ref bool handled)
     {
-        if (_buffer.Length > 0 && _rawBuffer.Length > 0)
+        if (_rawBuffer.Length > 0)
         {
-            string raw = _rawBuffer.ToString();
-            int deleteCount = _buffer.Length;
-            SendBackspaces(deleteCount);
-            SendString(raw);
+            // Force show raw input by clearing buffer (Render will show raw)
+            _buffer.Clear();
+            _buffer.Append(_rawBuffer.ToString());
+            SendBackspaces(_renderedText.Length);
+            SendString(_rawBuffer.ToString());
+            _renderedText = _rawBuffer.ToString();
             ClearBuffers();
             handled = true;
             return true;
@@ -386,6 +409,7 @@ public class VietnameseConverter
         _buffer.Clear();
         _rawBuffer.Clear();
         _undoStack.Clear();
+        _renderedText = "";
     }
 
     private string? TryApplyModifier(string buffer, char modifier)
@@ -744,11 +768,7 @@ public class VietnameseConverter
         }
     }
 
-    private void SendString(string s)
-    {
-        Clipboard.SetText(s);
-        NativeMethods.SendKeyCombo(Keys.ControlKey, Keys.V);
-    }
+    private void SendString(string s) => NativeMethods.SendString(s);
 
     private char KeyToChar(Keys key)
     {
@@ -769,4 +789,66 @@ public class VietnameseConverter
     {
         ClearBuffers();
     }
+
+    #region Test Helpers (for unit testing without Windows API)
+    
+    public string TestGetBaseSym(string buffer) => GetBaseSym(buffer);
+    public bool TestIsValidSym(string buffer) => IsValidSym(buffer);
+    public static char TestApplyToneMark(char baseVowel, char toneKey) => ApplyToneMark(baseVowel, toneKey);
+    public static char TestGetBaseFromToned(char c) => GetBaseFromToned(c);
+    
+    /// <summary>
+    /// Simulate typing a string and return the render result (without sending to screen)
+    /// </summary>
+    public string SimulateTyping(string input)
+    {
+        ClearBuffers();
+        
+        foreach (char c in input)
+        {
+            _rawBuffer.Append(c);
+            char lower = char.ToLower(c);
+            
+            // Try modifier
+            if (lower == 'z' || lower == 'w' || lower == 's' || 
+                lower == 'f' || lower == 'r' || lower == 'x' || 
+                lower == 'j' || lower == 'd')
+            {
+                string? result = TryApplyModifier(_buffer.ToString(), lower);
+                if (result != null)
+                {
+                    _buffer.Clear();
+                    _buffer.Append(result);
+                    continue;
+                }
+            }
+            
+            // Try ie/ye auto-conversion
+            if (IeYeFollowingConsonants.Contains(c))
+            {
+                string? result = TryAutoConvertIeYe(_buffer.ToString(), c);
+                if (result != null)
+                {
+                    _buffer.Clear();
+                    _buffer.Append(result);
+                    continue;
+                }
+            }
+            
+            // Regular char
+            _buffer.Append(c);
+            
+            // Try reposition
+            string? repositioned = TryRepositionTone(_buffer.ToString());
+            if (repositioned != null)
+            {
+                _buffer.Clear();
+                _buffer.Append(repositioned);
+            }
+        }
+        
+        return GetRenderText();
+    }
+    
+    #endregion
 }

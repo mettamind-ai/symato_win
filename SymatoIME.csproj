@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <!-- Use Exe for console output in test mode, WinExe for normal app -->
+    <OutputType Condition="'$(Configuration)' == 'Test'">Exe</OutputType>
+    <OutputType Condition="'$(Configuration)' != 'Test'">WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
