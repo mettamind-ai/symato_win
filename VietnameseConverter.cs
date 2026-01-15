@@ -240,6 +240,17 @@ public class VietnameseConverter
             ClearBuffers();
             return false;
         }
+        
+        // Ignore if Win key is pressed (Win+D, Win+E, etc.)
+        // Control.ModifierKeys doesn't track Win key, so use GetAsyncKeyState
+        const int VK_LWIN = 0x5B;
+        const int VK_RWIN = 0x5C;
+        if ((NativeMethods.GetAsyncKeyState(VK_LWIN) & 0x8000) != 0 ||
+            (NativeMethods.GetAsyncKeyState(VK_RWIN) & 0x8000) != 0)
+        {
+            ClearBuffers();
+            return false;
+        }
 
         // Check buffer timeout
         if ((DateTime.Now - _lastKeyTime).TotalMilliseconds > BufferTimeoutMs)
