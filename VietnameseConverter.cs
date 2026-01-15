@@ -341,7 +341,7 @@ public class VietnameseConverter
         foreach (char c in raw)
         {
             char lower = char.ToLower(c);
-            
+
             // Try to apply as modifier
             string? modified = TryApplyModifier(_buffer.ToString(), lower);
             if (modified != null)
@@ -505,7 +505,7 @@ public class VietnameseConverter
             char c2 = buffer[i + 1];
             char base1 = GetPureBaseVowel(c1);
             char base2 = GetPureBaseVowel(c2);
-            
+
             // Check for "uo" pattern (case insensitive) - u followed by o
             if (char.ToLower(base1) == 'u' && char.ToLower(base2) == 'o')
             {
@@ -513,7 +513,7 @@ public class VietnameseConverter
                 char baseVowel2 = GetBaseVowel(c2);
                 bool has1 = BreveHornReverse.ContainsKey(baseVowel1);
                 bool has2 = BreveHornReverse.ContainsKey(baseVowel2);
-                
+
                 // If neither has breve/horn yet, convert both
                 if (!has1 && !has2)
                 {
@@ -533,6 +533,34 @@ public class VietnameseConverter
             }
         }
         
+        // Special case: "oa" -> "oă" (e.g., hoac -> hoăc, toac -> toăc)
+        // In Vietnamese, "oă" combinations are valid (hoặc, toặc), but "ơa" is not
+        for (int i = 0; i < buffer.Length - 1; i++)
+        {
+            char c1 = buffer[i];
+            char c2 = buffer[i + 1];
+            char base1 = GetPureBaseVowel(c1);
+            char base2 = GetPureBaseVowel(c2);
+
+            // Check for "oa" pattern (case insensitive) - o followed by a
+            if (char.ToLower(base1) == 'o' && char.ToLower(base2) == 'a')
+            {
+                char baseVowel2 = GetBaseVowel(c2);
+                bool has2 = BreveHornReverse.ContainsKey(baseVowel2);
+
+                // If 'a' doesn't have breve yet, convert a -> ă
+                if (!has2)
+                {
+                    char newA = char.IsUpper(base2) ? 'Ă' : 'ă';
+                    char result = TransferTone(c2, newA);
+
+                    _undoStack.Push(new UndoAction(i + 1, c2, result, ActionType.BreveHorn));
+
+                    return buffer.Substring(0, i + 1) + result + buffer.Substring(i + 2);
+                }
+            }
+        }
+
         // Default behavior: Find first vowel that can take breve/horn
         for (int i = 0; i < buffer.Length; i++)
         {
