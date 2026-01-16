@@ -84,7 +84,7 @@ symato_qoder/
 ├── SymatoContext.cs        # System tray, lifecycle
 ├── VietnameseConverter.cs  # Core Vietnamese input logic
 ├── SymatoSyms.cs           # 2800+ valid Vietnamese syllables
-├── EngineTests.cs          # Unit tests (51 tests)
+├── EngineTests.cs          # Unit tests (56 tests)
 ├── KeyboardHook.cs         # Low-level keyboard hook
 ├── MouseHook.cs            # Low-level mouse hook
 ├── VolumeControl.cs        # Volume control with OSD
@@ -123,7 +123,7 @@ symato_qoder/
 5. **Có phụ âm cuối** → dấu trên nguyên âm cuối
 6. **Không có phụ âm cuối** → dấu trên nguyên âm áp cuối
 
-## ✅ Unit Tests (51 tests)
+## ✅ Unit Tests (56 tests)
 
 ```
 ✓ Tone tests: as→á, af→à, ar→ả, ax→ã, aj→ạ
