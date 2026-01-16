@@ -15,6 +15,7 @@ public class Settings
     public bool ImeEnabled { get; set; } = true;
     public bool KeyRemapEnabled { get; set; } = true;
     public bool VolumeControlEnabled { get; set; } = true;
+    public bool AutoIeYeEnabled { get; set; } = true;  // Auto ie/ye → iê/yê
     public bool StartWithWindows { get; set; } = false;
 
     public static Settings Load()

@@ -16,6 +16,7 @@ public class SymatoContext : ApplicationContext
     private bool _isActive = true;
     private bool _keyRemapEnabled = true;
     private bool _volumeControlEnabled = true;
+    private bool _autoIeYeEnabled = true;
 
     public SymatoContext()
     {
@@ -23,8 +24,10 @@ public class SymatoContext : ApplicationContext
         _isActive = _settings.ImeEnabled;
         _keyRemapEnabled = _settings.KeyRemapEnabled;
         _volumeControlEnabled = _settings.VolumeControlEnabled;
+        _autoIeYeEnabled = _settings.AutoIeYeEnabled;
         
         _converter = new VietnameseConverter();
+        _converter.AutoIeYeEnabled = _autoIeYeEnabled;
         
         // Create tray icon
         _trayIcon = new NotifyIcon
@@ -102,6 +105,13 @@ public class SymatoContext : ApplicationContext
         };
         volumeItem.Click += (s, e) => ToggleVolumeControl();
         
+        var autoIeYeItem = new ToolStripMenuItem("Auto ie/ye → iê/yê")
+        {
+            Checked = _autoIeYeEnabled,
+            CheckOnClick = true
+        };
+        autoIeYeItem.Click += (s, e) => ToggleAutoIeYe();
+        
         var startupItem = new ToolStripMenuItem("Start with Windows")
         {
             Checked = _settings.StartWithWindows,
@@ -115,6 +125,7 @@ public class SymatoContext : ApplicationContext
         menu.Items.Add(imeItem);
         menu.Items.Add(keyRemapItem);
         menu.Items.Add(volumeItem);
+        menu.Items.Add(autoIeYeItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(startupItem);
         menu.Items.Add(new ToolStripSeparator());
@@ -161,6 +172,17 @@ public class SymatoContext : ApplicationContext
         
         if (_trayIcon.ContextMenuStrip?.Items[2] is ToolStripMenuItem item)
             item.Checked = _volumeControlEnabled;
+    }
+
+    private void ToggleAutoIeYe()
+    {
+        _autoIeYeEnabled = !_autoIeYeEnabled;
+        _settings.AutoIeYeEnabled = _autoIeYeEnabled;
+        _settings.Save();
+        _converter.AutoIeYeEnabled = _autoIeYeEnabled;
+        
+        if (_trayIcon.ContextMenuStrip?.Items[3] is ToolStripMenuItem item)
+            item.Checked = _autoIeYeEnabled;
     }
 
     private void ToggleStartup(ToolStripMenuItem item)

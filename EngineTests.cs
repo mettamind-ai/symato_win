@@ -47,6 +47,7 @@ public static class EngineTests
         Check("tien", "tiên", "auto_ie_conversion");
         Check("yen", "yên", "auto_ye_conversion");
         Check("tiens", "tiến", "auto_ie_with_tone");
+        Check("nguyen", "nguyên", "auto_uye_conversion");  // UYE pattern
         
         // === INVALID SYLLABLES -> RAW OUTPUT ===
         Check("rerun", "rerun", "invalid_rerun_raw");

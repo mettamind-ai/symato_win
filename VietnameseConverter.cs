@@ -13,6 +13,9 @@ public class VietnameseConverter
     private string _renderedText = "";  // Track what's displayed on screen
     private DateTime _lastKeyTime = DateTime.MinValue;
     private const int BufferTimeoutMs = 2000;
+    
+    // Public settings controlled by tray menu
+    public bool AutoIeYeEnabled { get; set; } = true;
 
     private record UndoAction(int Position, char OldChar, char NewChar, ActionType Type);
     private enum ActionType { Tone, Circumflex, BreveHorn, DToD }
@@ -462,6 +465,9 @@ public class VietnameseConverter
     /// </summary>
     private string? TryAutoConvertIeYe(string buffer, char followingChar)
     {
+        // Skip if auto ie/ye conversion is disabled
+        if (!AutoIeYeEnabled) return null;
+        
         if (buffer.Length < 2) return null;
 
         // Get the last two characters
