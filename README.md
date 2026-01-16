@@ -26,10 +26,12 @@ Bộ gõ tiếng Việt tùy chỉnh cho Windows 11, được xây dựng bằng
   - `quas` → `quá` (không phải `qúa`)
   - `muonws` → `mướn` (dấu trên `ơ`)
 
-### 🧠 Smart Validation (MỚI!)
+### 🧠 Smart Validation
 - **2800+ âm tiết hợp lệ**: Chỉ áp dụng dấu cho âm tiết tiếng Việt hợp lệ
 - **Auto-revert**: Khi gõ tiếng Anh (như `rerun`), tự động revert về ký tự gốc
 - **Auto-reposition**: `múo` + `n` → `muón` (dấu tự động di chuyển)
+- **Tone Stop Rule**: Âm tiết kết thúc bằng `c/ch/t/p` chỉ nhận sắc(s)/nặng(j)
+- **Diphthong `ươ` placement**: `mướn` (dấu trên `ơ`, không phải `ư`)
 
 ### ⌨️ Key Remapping
 Chu kỳ hoán đổi phím: **`~` ↔ `CapsLock` ↔ `Tab`**
@@ -49,6 +51,8 @@ Chu kỳ hoán đổi phím: **`~` ↔ `CapsLock` ↔ `Tab`**
 | `Ctrl + Shift + S` | Bật/tắt gõ tiếng Việt |
 | `Escape` | Hoàn tác về ASCII gốc |
 | `Backspace` | Smart undo (hoàn tác dấu) |
+| `Tab` / Remap keys | Auto reset buffer (autocomplete support) |
+| `Win+D`, `Win+E`... | Pass-through (không block) |
 
 ## 🚀 Cài đặt & Chạy
 
@@ -80,7 +84,7 @@ symato_qoder/
 ├── SymatoContext.cs        # System tray, lifecycle
 ├── VietnameseConverter.cs  # Core Vietnamese input logic
 ├── SymatoSyms.cs           # 2800+ valid Vietnamese syllables
-├── EngineTests.cs          # Unit tests (29 tests)
+├── EngineTests.cs          # Unit tests (51 tests)
 ├── KeyboardHook.cs         # Low-level keyboard hook
 ├── MouseHook.cs            # Low-level mouse hook
 ├── VolumeControl.cs        # Volume control with OSD
@@ -113,7 +117,7 @@ symato_qoder/
 5. **Có phụ âm cuối** → dấu trên nguyên âm cuối
 6. **Không có phụ âm cuối** → dấu trên nguyên âm áp cuối
 
-## ✅ Unit Tests (40 tests)
+## ✅ Unit Tests (51 tests)
 
 ```
 ✓ Tone tests: as→á, af→à, ar→ả, ax→ã, aj→ạ
@@ -121,15 +125,23 @@ symato_qoder/
 ✓ Horn/breve: aw→ă, ow→ơ, uw→ư
 ✓ Combined: azs→ấ, uwj→ự
 ✓ UO cluster: tuongw→tương, muonws→mướn
+✓ OA pattern: hoawc→hoặc, toawn→toắn
+✓ Diphthong ươ: chuongws→chướng (tone on ơ)
 ✓ Validation: quas→quá, gias→giá
 ✓ Auto ie/ye: tien→tiên, yen→yên
 ✓ Invalid→raw: rerun→rerun, xyz→xyz
 ✓ Tone Stop Rule: c/ch/t/p only sắc(s)/nặng(j)
+✓ Win key pass-through: Win+D, Win+E không bị block
+✓ Autocomplete: Tab/remap reset buffer
 ```
 
-## 💡 Suggestions
+## 💡 Roadmap
 
+- [x] ~~Tone Stop Rule enforcement~~
+- [x] ~~Diphthong tone placement~~
+- [x] ~~Win key shortcuts pass-through~~
+- [x] ~~Autocomplete buffer reset~~
+- [ ] Settings UI (hiện tại chỉ có JSON)
+- [ ] Installer / auto-update
 - [ ] Tách Engine riêng để dễ maintain
-- [ ] Thêm option tắt validation (cho user muốn gõ tự do)
-- [ ] State-based design với CharState struct (như symato_droid)
 
