@@ -90,6 +90,19 @@ public static class EngineTests
         Check("tuoiw", "tươi", "diphthong_uoi_no_tone");           // ươi without tone
         Check("muonwf", "mườn", "diphthong_uon_tone_on_o");        // ươn + f → tone on ơ
         
+        // === FROM SYMATO_DROID: DOUBLE-KEY REVERT ===
+        Check("aww", "aww", "double_w_revert");     // double 'w' → revert to raw
+        Check("azz", "azz", "double_z_revert");     // double 'z' → revert to raw
+        // Note: "ass" → "á" in symato_qoder (tone applied once, 's' ignored second time)
+        // This differs from symato_droid where "ass" → "ass" (double-key revert)
+        
+        // === FROM SYMATO_DROID: STROKE TOGGLE ===
+        Check("dad", "đa", "stroke_d");             // d + a + d → đa
+        Check("dadd", "da", "stroke_toggle");       // toggle đ back to d
+        
+        // === FROM SYMATO_DROID: UA CLUSTER ===
+        Check("cuaw", "cưa", "horn_ua_cluster");    // ua + w → ưa
+        
         // Print results
         int total = _failed + CountPassed();
         Console.WriteLine($"\n=== Results: {total - _failed} passed, {_failed} failed ===");

@@ -503,10 +503,22 @@ public class VietnameseConverter
         if (buffer.Length == 0) return null;
         
         char first = buffer[0];
-        if (char.ToLower(first) == 'd')
+        char firstLower = char.ToLower(first);
+        
+        // Toggle: d → đ
+        if (firstLower == 'd')
         {
             char oldChar = first;
             char replacement = char.IsUpper(first) ? 'Đ' : 'đ';
+            _undoStack.Push(new UndoAction(0, oldChar, replacement, ActionType.DToD));
+            return replacement + buffer.Substring(1);
+        }
+        
+        // Toggle: đ → d (revert)
+        if (firstLower == 'đ')
+        {
+            char oldChar = first;
+            char replacement = char.IsUpper(first) ? 'D' : 'd';
             _undoStack.Push(new UndoAction(0, oldChar, replacement, ActionType.DToD));
             return replacement + buffer.Substring(1);
         }

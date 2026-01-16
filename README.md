@@ -105,7 +105,13 @@ symato_qoder/
 
 - **Icon xanh (S)**: Vietnamese input đang BẬT
 - **Icon xám (S)**: Vietnamese input đang TẮT
-- **Right-click**: Menu với các tùy chọn
+- **Left-click**: Toggle bật/tắt nhanh
+- **Right-click**: Menu với các tùy chọn:
+  - ✅ Vietnamese IME — Bật/tắt gõ tiếng Việt
+  - ✅ Key Remap (~↔CapsLock↔Tab) — Bật/tắt hoán đổi phím
+  - ✅ Volume Control (Ctrl+Shift+Wheel) — Bật/tắt điều chỉnh âm lượng
+  - ✅ Auto ie/ye → iê/yê — Tự động chuyển ie/ye thành iê/yê (mặc định BẬT)
+  - ☐ Start with Windows — Khởi động cùng Windows
 
 ## 📝 Quy tắc bỏ dấu tiếng Việt
 
