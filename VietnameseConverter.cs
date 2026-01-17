@@ -372,28 +372,71 @@ public class VietnameseConverter
     }
     
     // Rebuild _buffer from _rawBuffer by replaying all transformations
+    // STRICT RULE: Modifiers only apply if ALL characters after them are also modifiers
+    // This allows chaining (azs→ấ) but blocks non-modifier followers (asc→asc)
     private void RebuildFromRaw()
     {
         _buffer.Clear();
         _undoStack.Clear();
         
         string raw = _rawBuffer.ToString();
-        foreach (char c in raw)
+        for (int i = 0; i < raw.Length; i++)
         {
+            char c = raw[i];
             char lower = char.ToLower(c);
 
-            // Try to apply as modifier
-            string? modified = TryApplyModifier(_buffer.ToString(), lower);
-            if (modified != null)
+            // STRICT: Only apply modifier if ALL remaining chars are also modifiers
+            // This allows: azs (z applies, then s applies) → ấ
+            // This blocks: asc (s followed by non-modifier 'c') → asc
+            if (IsModifierKey(lower) && AllRemainingAreModifiers(raw, i))
+            {
+                string? modified = TryApplyModifier(_buffer.ToString(), lower);
+                if (modified != null)
+                {
+                    _buffer.Clear();
+                    _buffer.Append(modified);
+                    continue;
+                }
+            }
+            
+            // Try ie/ye auto-conversion before adding the character
+            // This handles patterns like "tien" → "tiên" where 'n' triggers conversion
+            if (IeYeFollowingConsonants.Contains(c) && !IsModifierKey(lower))
+            {
+                string? converted = TryAutoConvertIeYe(_buffer.ToString(), c);
+                if (converted != null)
+                {
+                    _buffer.Clear();
+                    _buffer.Append(converted);
+                    continue;
+                }
+            }
+            
+            // Regular character - add to buffer
+            _buffer.Append(c);
+            
+            // Try reposition tone after adding consonant
+            string? repositioned = TryRepositionTone(_buffer.ToString());
+            if (repositioned != null)
             {
                 _buffer.Clear();
-                _buffer.Append(modified);
-            }
-            else
-            {
-                _buffer.Append(c);
+                _buffer.Append(repositioned);
             }
         }
+    }
+    
+    // Helper: Check if char is a modifier key (mark or tone)
+    private static bool IsModifierKey(char c) => "zwsfrxjd".Contains(c);
+    
+    // Helper: Check if all characters from position i to end are modifier keys
+    private static bool AllRemainingAreModifiers(string raw, int i)
+    {
+        for (int j = i; j < raw.Length; j++)
+        {
+            if (!IsModifierKey(char.ToLower(raw[j])))
+                return false;
+        }
+        return true;
     }
 
     private bool HandleEscape(ref bool handled)
@@ -862,6 +905,7 @@ public class VietnameseConverter
     
     /// <summary>
     /// Simulate typing a string and return the render result (without sending to screen)
+    /// Uses RebuildFromRaw() to ensure strict end-of-syllable modifier rule
     /// </summary>
     public string SimulateTyping(string input)
     {
@@ -870,44 +914,12 @@ public class VietnameseConverter
         foreach (char c in input)
         {
             _rawBuffer.Append(c);
-            char lower = char.ToLower(c);
             
-            // Try modifier
-            if (lower == 'z' || lower == 'w' || lower == 's' || 
-                lower == 'f' || lower == 'r' || lower == 'x' || 
-                lower == 'j' || lower == 'd')
-            {
-                string? result = TryApplyModifier(_buffer.ToString(), lower);
-                if (result != null)
-                {
-                    _buffer.Clear();
-                    _buffer.Append(result);
-                    continue;
-                }
-            }
-            
-            // Try ie/ye auto-conversion
-            if (IeYeFollowingConsonants.Contains(c))
-            {
-                string? result = TryAutoConvertIeYe(_buffer.ToString(), c);
-                if (result != null)
-                {
-                    _buffer.Clear();
-                    _buffer.Append(result);
-                    continue;
-                }
-            }
-            
-            // Regular char
-            _buffer.Append(c);
-            
-            // Try reposition
-            string? repositioned = TryRepositionTone(_buffer.ToString());
-            if (repositioned != null)
-            {
-                _buffer.Clear();
-                _buffer.Append(repositioned);
-            }
+            // Rebuild buffer from raw - this handles:
+            // 1. STRICT end-of-syllable modifier rule
+            // 2. ie/ye auto-conversion
+            // 3. Tone repositioning
+            RebuildFromRaw();
         }
         
         return GetRenderText();

@@ -46,7 +46,7 @@ public static class EngineTests
         // === AUTO IE/YE -> IÊ/YÊ CONVERSION ===
         Check("tien", "tiên", "auto_ie_conversion");
         Check("yen", "yên", "auto_ye_conversion");
-        Check("tiens", "tiến", "auto_ie_with_tone");
+        Check("tiens", "tiến", "auto_ie_with_tone");  // n triggers ie→iê, s is modifier at end
         Check("nguyen", "nguyên", "auto_uye_conversion");  // UYE pattern
         
         // === INVALID SYLLABLES -> RAW OUTPUT ===
@@ -78,11 +78,11 @@ public static class EngineTests
         Check("nect", "nect", "tone_stop_late_t_other");       // similar pattern
         Check("nexc", "nexc", "tone_stop_late_c_x_invalid");   // 'x' invalid with 'c' ending
         
-        // === OA + W PATTERN (oa -> oă, not ơa) ===
-        Check("hoawc", "hoăc", "oa_breve_hoac");     // hoawc -> hoăc (not hơac)
-        Check("toawc", "toăc", "oa_breve_toac");     // similar pattern
-        Check("loawng", "loăng", "oa_breve_loang");  // with ng ending
-        Check("hoawcj", "hoặc", "oa_breve_with_tone"); // with tone
+        // === OA + W PATTERN (oa -> oă, not ơa) - STRICT: mark at end ===
+        Check("hoacw", "hoăc", "oa_breve_hoac");     // STRICT: w at end
+        Check("toacw", "toăc", "oa_breve_toac");     // STRICT: w at end
+        Check("loangw", "loăng", "oa_breve_loang");  // STRICT: w at end
+        Check("hoacwj", "hoặc", "oa_breve_with_tone"); // STRICT: mark+tone at end
         
         // === DIPHTHONG TONE PLACEMENT (ươ, iê, uô - tone on SECOND vowel) ===
         Check("nguoiwf", "người", "diphthong_uoi_tone_on_o");     // ươi + f → tone on ơ
@@ -102,6 +102,17 @@ public static class EngineTests
         
         // === FROM SYMATO_DROID: UA CLUSTER ===
         Check("cuaw", "cưa", "horn_ua_cluster");    // ua + w → ưa
+        
+        // === STRICT END-OF-SYLLABLE RULE ===
+        // Modifiers (d,z,w,s,f,r,x,j) are ONLY applied when they are the LAST char
+        Check("asc", "asc", "strict_tone_not_at_end");      // 's' not at end → no tone
+        Check("azc", "azc", "strict_mark_not_at_end");      // 'z' not at end → no circumflex  
+        Check("dac", "dac", "strict_d_not_at_end");         // 'd' not at end → no đ
+        Check("awc", "awc", "strict_w_not_at_end");         // 'w' not at end → no breve
+        Check("muosnc", "muosnc", "strict_tone_mid");       // 's' in middle → no conversion
+        Check("toawng", "toawng", "strict_w_mid_cluster");  // 'w' in middle → no breve (compare to "toawngw")
+        Check("dang", "dang", "strict_d_start_only");       // 'd' start, ends with 'g' → no đ
+        Check("dangd", "đang", "strict_d_at_end_toggle");   // 'd' at end → applies đ
         
         // Print results
         int total = _failed + CountPassed();
