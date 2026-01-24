@@ -31,3 +31,4 @@ Desktop.ini
 
 # Local agent artifacts
 .mx_hybrid/
+*qodercli*

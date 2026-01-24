@@ -101,7 +101,12 @@ public static class EngineTests
         Check("dadd", "da", "stroke_toggle");       // toggle đ back to d
         
         // === FROM SYMATO_DROID: UA CLUSTER ===
-        Check("cuaw", "cưa", "horn_ua_cluster");    // ua + w → ưa
+        Check("cuaw", "cưa", "horn_ua_cluster");    // ua + w → ưa (no consonant after)
+        
+        // === UA + CONSONANT PATTERN (ua + consonant -> uă) ===
+        Check("quangw", "quăng", "ua_breve_quang");   // ua + ng + w → quăng (consonant after)
+        Check("tuanw", "tuăn", "ua_breve_tuan");      // ua + n + w → tuăn (consonant after)
+        Check("quacw", "quăc", "ua_breve_quac");      // ua + c + w → quăc (consonant after)
         
         // === STRICT END-OF-SYLLABLE RULE ===
         // Modifiers (d,z,w,s,f,r,x,j) are ONLY applied when they are the LAST char

@@ -658,6 +658,44 @@ public class VietnameseConverter
                 }
             }
         }
+        
+        // Special case: "ua" + consonant -> "uă" (e.g., quang -> quăng, tuan -> tuăn)
+        // ONLY when there's a consonant AFTER the "ua" pattern
+        // If "ua" is at end of syllable (cua), let default behavior handle it (u -> ư)
+        // This is because: "quăng" is valid, "qưang" is not; but "cưa" is valid, "cuă" is not
+        for (int i = 0; i < buffer.Length - 1; i++)
+        {
+            char c1 = buffer[i];
+            char c2 = buffer[i + 1];
+            char base1 = GetPureBaseVowel(c1);
+            char base2 = GetPureBaseVowel(c2);
+
+            // Check for "ua" pattern (case insensitive) - u followed by a
+            if (char.ToLower(base1) == 'u' && char.ToLower(base2) == 'a')
+            {
+                // IMPORTANT: Only apply breve to 'a' if there's a consonant after
+                // "quang" + w → quăng (consonant 'ng' after 'ua')
+                // "cua" + w → cưa (no consonant after, use default behavior for u → ư)
+                bool hasConsonantAfter = i + 2 < buffer.Length && !IsVowel(buffer[i + 2]);
+                
+                if (hasConsonantAfter)
+                {
+                    char baseVowel2 = GetBaseVowel(c2);
+                    bool has2 = BreveHornReverse.ContainsKey(baseVowel2);
+
+                    // If 'a' doesn't have breve yet, convert a -> ă
+                    if (!has2)
+                    {
+                        char newA = char.IsUpper(base2) ? 'Ă' : 'ă';
+                        char result = TransferTone(c2, newA);
+
+                        _undoStack.Push(new UndoAction(i + 1, c2, result, ActionType.BreveHorn));
+
+                        return buffer.Substring(0, i + 1) + result + buffer.Substring(i + 2);
+                    }
+                }
+            }
+        }
 
         // Default behavior: Find first vowel that can take breve/horn
         for (int i = 0; i < buffer.Length; i++)
