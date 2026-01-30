@@ -237,6 +237,16 @@ public class SymatoContext : ApplicationContext
             handled = true;
             return true;
         }
+        
+        // Handle Ctrl+B to paste clipboard without backticks
+        if (isKeyDown && key == Keys.B && 
+            (Control.ModifierKeys & Keys.Control) != 0 &&
+            (Control.ModifierKeys & Keys.Shift) == 0)
+        {
+            PasteWithoutBackticks();
+            handled = true;
+            return true;
+        }
 
         // Handle key remapping
         if (_keyRemapEnabled && isKeyDown)
@@ -266,6 +276,53 @@ public class SymatoContext : ApplicationContext
         }
         
         return false;
+    }
+
+    private void PasteWithoutBackticks()
+    {
+        try
+        {
+            // Get clipboard text
+            if (!Clipboard.ContainsText()) return;
+            
+            string text = Clipboard.GetText();
+            if (string.IsNullOrEmpty(text)) return;
+            
+            // Remove all backticks
+            string cleanText = text.Replace("`", "");
+            
+            // If nothing changed, just do normal paste
+            if (cleanText == text)
+            {
+                NativeMethods.SendKeyCombo(Keys.Control, Keys.V);
+                return;
+            }
+            
+            // Save original clipboard content
+            string originalText = text;
+            
+            // Set cleaned text to clipboard
+            Clipboard.SetText(cleanText);
+            
+            // Send Ctrl+V to paste
+            NativeMethods.SendKeyCombo(Keys.Control, Keys.V);
+            
+            // Restore original clipboard after a short delay
+            Task.Delay(100).ContinueWith(_ =>
+            {
+                try
+                {
+                    // Run on UI thread
+                    _trayIcon.ContextMenuStrip?.Invoke(() => Clipboard.SetText(originalText));
+                }
+                catch { }
+            });
+        }
+        catch
+        {
+            // If anything fails, try normal paste
+            NativeMethods.SendKeyCombo(Keys.Control, Keys.V);
+        }
     }
 
     private void OnMouseWheel(int delta, Keys modifiers)

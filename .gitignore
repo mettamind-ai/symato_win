@@ -6,6 +6,7 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
+publish/
 
 # Visual Studio
 .vs/
@@ -32,3 +33,7 @@ Desktop.ini
 # Local agent artifacts
 .mx_hybrid/
 *qodercli*
+.d*
+.m*
+
+

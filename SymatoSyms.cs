@@ -85,7 +85,7 @@ internal static class SymatoSyms
     phy pi pia pic pich piec piem pien pieng piet pieu pim pin ping pinh pip pit piu po poa poang poat poc poe
     poem poi pom pon pong ponh poo pooc poom poon poong pop pot pu pua puan puat puc puch pui pum pun pung punh
     puo puoc puoi puon puong pup put puy puya puyu py qua quac quach quai quam quan quang quanh quao quap quat
-    quau quay que quech quen queng quenh queo quet queu qui quia quiet quin quing quit quiu quo quoac quoai quoam
+    quau quay que quech quen queng quenh queo quet queu qui quia quin quing quit quiu quo quoac quoai quoam
     quoan quoang quoanh quoat quoay quoc quoet quoi quon quong quop quot quu quuay quuy quuyen quuyet quy quych
     quyen quyeng quyenh quyet quyn quyng quynh quyt ra rac rach rai ram ran rang ranh rao rap rat rau ray re rec
     rech rem ren reng renh reo rep ret reu ri ria ric rich riec riem rien rieng riep riet rieu rim rin ring rinh
