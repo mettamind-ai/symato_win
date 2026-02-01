@@ -16,6 +16,7 @@ public class VietnameseConverter
     
     // Public settings controlled by tray menu
     public bool AutoIeYeEnabled { get; set; } = true;
+    public bool DoubleKeyRawEnabled { get; set; } = true;
 
     private record UndoAction(int Position, char OldChar, char NewChar, ActionType Type);
     private enum ActionType { Tone, Circumflex, BreveHorn, DToD }
@@ -126,6 +127,21 @@ public class VietnameseConverter
 
     private static bool HasToneMark(string buffer) => buffer.Any(c => GetToneKeyFromChar(c) != '\0');
 
+    // If raw input has consecutive identical keystrokes, force raw output (no conversion).
+    // Comparison is case-insensitive to match the physical key regardless of shift/caps.
+    private static bool HasConsecutiveDuplicateKeystrokes(string raw)
+    {
+        if (raw.Length < 2) return false;
+
+        for (int i = 1; i < raw.Length; i++)
+        {
+            if (char.ToLowerInvariant(raw[i]) == char.ToLowerInvariant(raw[i - 1]))
+                return true;
+        }
+
+        return false;
+    }
+
     // Tone Stop Rule: c/ch/t/p endings only allow sắc(s) or nặng(j)
     private static bool EndsWithStopConsonant(string b) =>
         b.Length >= 2 && (b.EndsWith("ch", StringComparison.OrdinalIgnoreCase) ||
@@ -143,11 +159,14 @@ public class VietnameseConverter
     private string GetRenderText()
     {
         if (_rawBuffer.Length == 0) return "";
-        
+
+        string raw = _rawBuffer.ToString();
+        if (DoubleKeyRawEnabled && HasConsecutiveDuplicateKeystrokes(raw)) return raw;
+
         string buffer = _buffer.ToString();
         
         // Check basic syllable validity
-        if (!IsValidSym(buffer)) return _rawBuffer.ToString();
+        if (!IsValidSym(buffer)) return raw;
         
         // Check Tone Stop Rule: if buffer has a tone, validate it against ending consonant
         if (HasToneMark(buffer) && EndsWithStopConsonant(buffer))
@@ -163,7 +182,7 @@ public class VietnameseConverter
             // If tone violates Tone Stop Rule, fallback to raw
             if (toneKey != '\0' && !IsValidToneForSyllable(buffer, toneKey))
             {
-                return _rawBuffer.ToString();
+                return raw;
             }
         }
         

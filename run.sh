@@ -20,7 +20,21 @@ build() {
 case "${1:-}" in
     test|--test)
         echo "Running SymatoIME Engine Tests..."
-        dotnet run -c Test -- --test
+        # Prefer Windows .NET runtime via PowerShell (WSL lacks Microsoft.WindowsDesktop.App).
+        if command -v powershell.exe >/dev/null 2>&1; then
+            WIN_PWD=$(wslpath -w "$(pwd)")
+            WIN_PWD_WSLDOLLAR=$(printf '%s' "$WIN_PWD" | sed 's#^\\\\wsl\\.localhost\\\\#\\\\wsl$\\\\#')
+            for WIN_CANDIDATE in "$WIN_PWD" "$WIN_PWD_WSLDOLLAR"; do
+                if powershell.exe -NoProfile -Command "Set-Location -LiteralPath '$WIN_CANDIDATE'; dotnet build -c Test -p:EnableWindowsTargeting=true; \$root = (Get-Location).ProviderPath; \$exe = [IO.Path]::Combine(\$root, 'bin', 'Test', 'net8.0-windows', 'SymatoIME.exe'); & \"\$exe\" --test"; then
+                    exit 0
+                fi
+            done
+
+            echo "Windows test run failed; ensure Windows can access the WSL path and .NET Desktop Runtime is installed."
+            exit 1
+        fi
+
+        dotnet run -c Test -p:EnableWindowsTargeting=true -- --test
         ;;
     build|--build)
         build
@@ -34,11 +48,11 @@ case "${1:-}" in
         echo "Starting SymatoIME..."
         kill_existing
         
-        # Run using wsl.exe to properly launch Windows exe
-        WSL_ROOT=$(wslpath -w /)
-        powershell.exe -Command "Start-Process '\$WSL_ROOT\home\t\mx\symato_qoder\$EXE_PATH'" 2>/dev/null || \
-            cmd.exe /c start "" "\\\\wsl.localhost\\Ubuntu\\home\\t\\mx\\symato_qoder\\$EXE_PATH" 2>/dev/null || \
-            echo "Failed to start. Try manual: powershell.exe -Command \"Start-Process '\$(wslpath -w /home/t/mx/symato_qoder/$EXE_PATH)'\""
+        # Run using Windows path to properly launch Windows exe
+        WIN_EXE_PATH=$(wslpath -w "/home/t/mx/symato_qoder/$EXE_PATH")
+        powershell.exe -NoProfile -Command "Start-Process -FilePath '$WIN_EXE_PATH'" 2>/dev/null || \
+            cmd.exe /c start "" "$WIN_EXE_PATH" 2>/dev/null || \
+            echo "Failed to start. Try manual: powershell.exe -Command \"Start-Process -FilePath '$WIN_EXE_PATH'\""
         
         sleep 1
         powershell.exe -Command "Get-Process -Name 'SymatoIME' -ErrorAction SilentlyContinue | Select-Object Name, Id, StartTime"

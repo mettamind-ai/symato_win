@@ -17,6 +17,7 @@ public class SymatoContext : ApplicationContext
     private bool _keyRemapEnabled = true;
     private bool _volumeControlEnabled = true;
     private bool _autoIeYeEnabled = true;
+    private bool _doubleKeyRawEnabled = true;
 
     public SymatoContext()
     {
@@ -25,9 +26,11 @@ public class SymatoContext : ApplicationContext
         _keyRemapEnabled = _settings.KeyRemapEnabled;
         _volumeControlEnabled = _settings.VolumeControlEnabled;
         _autoIeYeEnabled = _settings.AutoIeYeEnabled;
+        _doubleKeyRawEnabled = _settings.DoubleKeyRawEnabled;
         
         _converter = new VietnameseConverter();
         _converter.AutoIeYeEnabled = _autoIeYeEnabled;
+        _converter.DoubleKeyRawEnabled = _doubleKeyRawEnabled;
         
         // Create tray icon
         _trayIcon = new NotifyIcon
@@ -111,6 +114,13 @@ public class SymatoContext : ApplicationContext
             CheckOnClick = true
         };
         autoIeYeItem.Click += (s, e) => ToggleAutoIeYe();
+
+        var doubleKeyRawItem = new ToolStripMenuItem("maxx => maxx (not mã)")
+        {
+            Checked = _doubleKeyRawEnabled,
+            CheckOnClick = true
+        };
+        doubleKeyRawItem.Click += (s, e) => ToggleDoubleKeyRaw();
         
         var startupItem = new ToolStripMenuItem("Start with Windows")
         {
@@ -126,6 +136,7 @@ public class SymatoContext : ApplicationContext
         menu.Items.Add(keyRemapItem);
         menu.Items.Add(volumeItem);
         menu.Items.Add(autoIeYeItem);
+        menu.Items.Add(doubleKeyRawItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(startupItem);
         menu.Items.Add(new ToolStripSeparator());
@@ -183,6 +194,17 @@ public class SymatoContext : ApplicationContext
         
         if (_trayIcon.ContextMenuStrip?.Items[3] is ToolStripMenuItem item)
             item.Checked = _autoIeYeEnabled;
+    }
+
+    private void ToggleDoubleKeyRaw()
+    {
+        _doubleKeyRawEnabled = !_doubleKeyRawEnabled;
+        _settings.DoubleKeyRawEnabled = _doubleKeyRawEnabled;
+        _settings.Save();
+        _converter.DoubleKeyRawEnabled = _doubleKeyRawEnabled;
+
+        if (_trayIcon.ContextMenuStrip?.Items[4] is ToolStripMenuItem item)
+            item.Checked = _doubleKeyRawEnabled;
     }
 
     private void ToggleStartup(ToolStripMenuItem item)

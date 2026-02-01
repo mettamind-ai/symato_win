@@ -66,12 +66,27 @@ cd /path/to/symato_qoder
 dotnet run
 ```
 
+### Chạy nhanh trên WSL (start app)
+```bash
+./run.sh
+```
+
+### Dừng app khi đang chạy trong WSL
+```bash
+powershell.exe -Command "Stop-Process -Name 'SymatoIME' -Force -ErrorAction SilentlyContinue"
+```
+
+### Chạy unit tests (WSL + Windows runtime)
+```bash
+./run.sh test
+```
+
 ### Build release
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained
 ```
 
-### Chạy unit tests
+### Chạy unit tests (dotnet trực tiếp)
 ```bash
 dotnet run -c Test -- --test
 ```
@@ -150,4 +165,3 @@ symato_qoder/
 - [ ] Settings UI (hiện tại chỉ có JSON)
 - [ ] Installer / auto-update
 - [ ] Tách Engine riêng để dễ maintain
-

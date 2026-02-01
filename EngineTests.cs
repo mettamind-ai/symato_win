@@ -93,12 +93,11 @@ public static class EngineTests
         // === FROM SYMATO_DROID: DOUBLE-KEY REVERT ===
         Check("aww", "aww", "double_w_revert");     // double 'w' → revert to raw
         Check("azz", "azz", "double_z_revert");     // double 'z' → revert to raw
-        // Note: "ass" → "á" in symato_qoder (tone applied once, 's' ignored second time)
-        // This differs from symato_droid where "ass" → "ass" (double-key revert)
+        Check("ass", "ass", "double_s_revert");     // double 's' → revert to raw
         
         // === FROM SYMATO_DROID: STROKE TOGGLE ===
         Check("dad", "đa", "stroke_d");             // d + a + d → đa
-        Check("dadd", "da", "stroke_toggle");       // toggle đ back to d
+        Check("dadd", "dadd", "double_d_revert");   // double 'd' → revert to raw
         
         // === FROM SYMATO_DROID: UA CLUSTER ===
         Check("cuaw", "cưa", "horn_ua_cluster");    // ua + w → ưa (no consonant after)

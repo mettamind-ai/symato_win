@@ -16,6 +16,7 @@ public class Settings
     public bool KeyRemapEnabled { get; set; } = true;
     public bool VolumeControlEnabled { get; set; } = true;
     public bool AutoIeYeEnabled { get; set; } = true;  // Auto ie/ye → iê/yê
+    public bool DoubleKeyRawEnabled { get; set; } = true;  // maxx => maxx (no conversion)
     public bool StartWithWindows { get; set; } = false;
 
     public static Settings Load()
